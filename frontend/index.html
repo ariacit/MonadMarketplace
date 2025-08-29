@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MonadNFT Marketplace</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-gem"></i>
+                <span>MonadNFT</span>
+            </div>
+            <div class="nav-menu">
+                <button class="nav-btn" onclick="showSection('mint')">
+                    <i class="fas fa-plus-circle"></i> Mint NFT
+                </button>
+                <button class="nav-btn" onclick="showSection('marketplace')">
+                    <i class="fas fa-store"></i> Marketplace
+                </button>
+                <button class="nav-btn" onclick="showSection('my-nfts')">
+                    <i class="fas fa-images"></i> My NFTs
+                </button>
+                <button id="connectWallet" class="wallet-btn">
+                    <i class="fas fa-wallet"></i> Connect Wallet
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Wallet Status Bar -->
+    <div id="walletStatus" class="wallet-status hidden">
+        <div class="status-container">
+            <div class="status-info">
+                <span class="status-label">Connected:</span>
+                <span id="walletAddress" class="wallet-address"></span>
+                <span class="status-label">Balance:</span>
+                <span id="walletBalance" class="wallet-balance">0 ETH</span>
+            </div>
+            <div class="network-info">
+                <span class="network-indicator" id="networkIndicator">
+                    <i class="fas fa-circle"></i> Monad Testnet
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p id="loadingText">Processing transaction...</p>
+            </div>
+        </div>
+
+        <!-- Mint NFT Section -->
+        <section id="mint-section" class="content-section active">
+            <div class="section-header">
+                <h2><i class="fas fa-plus-circle"></i> Mint New NFT</h2>
+                <p>Create and mint a new NFT to your wallet</p>
+            </div>
+            
+            <div class="mint-container">
+                <div class="mint-form">
+                    <div class="form-group">
+                        <label for="tokenURI">
+                            <i class="fas fa-link"></i> Metadata URI
+                        </label>
+                        <input 
+                            type="url" 
+                            id="tokenURI" 
+                            placeholder="https://example.com/metadata.json"
+                            required
+                        >
+                        <small class="form-help">
+                            URL pointing to your NFT's metadata JSON file
+                        </small>
+                    </div>
+                    
+                    <button id="mintNFT" class="btn btn-primary">
+                        <i class="fas fa-hammer"></i> Mint NFT
+                    </button>
+                </div>
+                
+                <div class="mint-preview">
+                    <div class="preview-card">
+                        <div class="preview-header">
+                            <i class="fas fa-eye"></i> Preview
+                        </div>
+                        <div id="previewContent" class="preview-content">
+                            <i class="fas fa-image preview-icon"></i>
+                            <p>Enter a metadata URI to preview your NFT</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Marketplace Section -->
+        <section id="marketplace-section" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-store"></i> NFT Marketplace</h2>
+                <p>Browse and purchase NFTs from other users</p>
+            </div>
+            
+            <div class="marketplace-filters">
+                <div class="filter-group">
+                    <button class="filter-btn active" onclick="filterListings('all')">
+                        All Items
+                    </button>
+                    <button class="filter-btn" onclick="filterListings('low-to-high')">
+                        Price: Low to High
+                    </button>
+                    <button class="filter-btn" onclick="filterListings('high-to-low')">
+                        Price: High to Low
+                    </button>
+                </div>
+                <div class="search-group">
+                    <input type="text" id="searchInput" placeholder="Search by token ID...">
+                    <i class="fas fa-search"></i>
+                </div>
+            </div>
+            
+            <div id="marketplaceItems" class="marketplace-grid">
+                <div class="loading-placeholder">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading marketplace items...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- My NFTs Section -->
+        <section id="my-nfts-section" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-images"></i> My NFT Collection</h2>
+                <p>Manage your NFTs and list them for sale</p>
+            </div>
+            
+            <div class="nft-stats">
+                <div class="stat-card">
+                    <i class="fas fa-gem"></i>
+                    <div>
+                        <span class="stat-number" id="totalNFTs">0</span>
+                        <span class="stat-label">Total NFTs</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-tag"></i>
+                    <div>
+                        <span class="stat-number" id="listedNFTs">0</span>
+                        <span class="stat-label">Listed</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-coins"></i>
+                    <div>
+                        <span class="stat-number" id="totalEarnings">0 ETH</span>
+                        <span class="stat-label">Earnings</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="myNFTs" class="nft-grid">
+                <div class="loading-placeholder">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading your NFTs...</p>
+                </div>
+            </div>
+            
+            <div class="earnings-section">
+                <div class="earnings-card">
+                    <h3><i class="fas fa-wallet"></i> Withdrawable Earnings</h3>
+                    <div class="earnings-amount">
+                        <span id="withdrawableEarnings">0 ETH</span>
+                    </div>
+                    <button id="withdrawEarnings" class="btn btn-secondary">
+                        <i class="fas fa-download"></i> Withdraw Earnings
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Listing Modal -->
+    <div id="listingModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-tag"></i> List NFT for Sale</h3>
+                <button class="modal-close" onclick="closeModal('listingModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="listing-nft-info">
+                    <img id="listingNFTImage" src="" alt="NFT">
+                    <div>
+                        <h4 id="listingNFTName">NFT #</h4>
+                        <p id="listingNFTDescription"></p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="listingPrice">
+                        <i class="fas fa-ethereum"></i> Price (ETH)
+                    </label>
+                    <input 
+                        type="number" 
+                        id="listingPrice" 
+                        placeholder="0.1" 
+                        step="0.001"
+                        min="0.001"
+                        required
+                    >
+                    <small class="form-help">
+                        Marketplace fee: 2.5% • You'll receive 97.5% of sale price
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('listingModal')">
+                    Cancel
+                </button>
+                <button id="confirmListing" class="btn btn-primary">
+                    <i class="fas fa-tag"></i> List for Sale
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
