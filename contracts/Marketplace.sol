@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
@@ -66,7 +66,7 @@ contract Marketplace is ReentrancyGuard, Ownable, IERC721Receiver {
     event EarningsWithdrawn(address indexed seller, uint256 amount);
     event FeesWithdrawn(address indexed owner, uint256 amount);
     
-    constructor() {
+    constructor() Ownable(msg.sender) {
         _listingIdCounter = 1; // Start listing IDs from 1
     }
     

@@ -1,6 +1,6 @@
-// Contract addresses (update these after deployment)
-const NFT_CONTRACT_ADDRESS = "0x..."; // Replace with deployed NFT contract address
-const MARKETPLACE_CONTRACT_ADDRESS = "0x..."; // Replace with deployed Marketplace contract address
+// Contract addresses - Deployed on Monad Testnet
+const NFT_CONTRACT_ADDRESS = "0xf88A7d191f2448e408F006d9F24C72De4Af3f6Bb"; // NFT contract address
+const MARKETPLACE_CONTRACT_ADDRESS = "0xAA94524ab1a6A069957380f1Eb3E80551218c4c2"; // Marketplace contract address
 
 // Monad Testnet configuration
 const MONAD_TESTNET = {

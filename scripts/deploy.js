@@ -1,4 +1,11 @@
-const { ethers } = require("hardhat");
+import hre from "hardhat";
+const { ethers } = hre;
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function main() {
   console.log("🚀 Starting deployment to Monad Testnet...");
@@ -8,10 +15,10 @@ async function main() {
   console.log("📝 Deploying contracts with account:", deployer.address);
   
   // Check deployer balance
-  const balance = await deployer.getBalance();
-  console.log("💰 Account balance:", ethers.utils.formatEther(balance), "ETH");
+  const balance = await ethers.provider.getBalance(deployer.address);
+  console.log("💰 Account balance:", ethers.formatEther(balance), "ETH");
   
-  if (balance.lt(ethers.utils.parseEther("0.01"))) {
+  if (balance < ethers.parseEther("0.01")) {
     console.warn("⚠️  Warning: Account balance is low. Make sure you have enough ETH for deployment.");
   }
   
@@ -25,22 +32,22 @@ async function main() {
     console.log("\n🎨 Deploying NFT Contract...");
     const NFT = await ethers.getContractFactory("NFT");
     const nft = await NFT.deploy();
-    await nft.deployed();
-    console.log("✅ NFT Contract deployed to:", nft.address);
+    await nft.waitForDeployment();
+    console.log("✅ NFT Contract deployed to:", nft.target);
     
     // Deploy Marketplace Contract
     console.log("\n🏪 Deploying Marketplace Contract...");
     const Marketplace = await ethers.getContractFactory("Marketplace");
     const marketplace = await Marketplace.deploy();
-    await marketplace.deployed();
-    console.log("✅ Marketplace Contract deployed to:", marketplace.address);
+    await marketplace.waitForDeployment();
+    console.log("✅ Marketplace Contract deployed to:", marketplace.target);
     
     // Setup approvals
     console.log("\n🔧 Setting up contract permissions...");
     
     // Approve marketplace as minter for NFT contract
     console.log("📝 Approving marketplace as NFT minter...");
-    const approveTx = await nft.approveMinter(marketplace.address);
+    const approveTx = await nft.approveMinter(marketplace.target);
     await approveTx.wait();
     console.log("✅ Marketplace approved as NFT minter");
     
@@ -56,7 +63,7 @@ async function main() {
     // Check Marketplace contract
     const marketplaceFee = await marketplace.MARKETPLACE_FEE();
     const marketplaceOwner = await marketplace.owner();
-    console.log(`✅ Marketplace Contract verified: Fee: ${marketplaceFee/100}%, Owner: ${marketplaceOwner}`);
+    console.log(`✅ Marketplace Contract verified: Fee: ${Number(marketplaceFee)/100}%, Owner: ${marketplaceOwner}`);
     
     // Generate deployment summary
     console.log("\n📊 DEPLOYMENT SUMMARY");
@@ -64,11 +71,12 @@ async function main() {
     console.log(`📅 Deployment Date: ${new Date().toISOString()}`);
     console.log(`🌐 Network: Monad Testnet`);
     console.log(`👤 Deployer: ${deployer.address}`);
-    console.log(`💰 Gas Used: ${ethers.utils.formatEther(balance.sub(await deployer.getBalance()))} ETH`);
+    const finalBalance = await ethers.provider.getBalance(deployer.address);
+    console.log(`💰 Gas Used: ${ethers.formatEther(balance - finalBalance)} ETH`);
     console.log("");
     console.log("📋 Contract Addresses:");
-    console.log(`🎨 NFT Contract: ${nft.address}`);
-    console.log(`🏪 Marketplace Contract: ${marketplace.address}`);
+    console.log(`🎨 NFT Contract: ${nft.target}`);
+    console.log(`🏪 Marketplace Contract: ${marketplace.target}`);
     console.log("");
     console.log("🔗 Contract Details:");
     console.log(`NFT Name: ${nftName}`);
@@ -88,19 +96,17 @@ async function main() {
       deployer: deployer.address,
       contracts: {
         nft: {
-          address: nft.address,
+          address: nft.target,
           name: nftName,
           symbol: nftSymbol
         },
         marketplace: {
-          address: marketplace.address,
+          address: marketplace.target,
           fee: marketplaceFee.toString()
         }
       }
     };
     
-    const fs = require('fs');
-    const path = require('path');
     
     // Create deployments directory if it doesn't exist
     const deploymentsDir = path.join(__dirname, '..', 'deployments');

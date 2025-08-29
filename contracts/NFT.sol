@@ -1,19 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
-
 /**
  * @title NFT Contract
  * @dev ERC721 NFT contract with minting functionality and metadata URI support
  */
 contract NFT is ERC721, ERC721URIStorage, Ownable {
-    using Counters for Counters.Counter;
     
-    Counters.Counter private _tokenIdCounter;
+    uint256 private _tokenIdCounter;
     
     // Mapping to track if an address is approved to mint
     mapping(address => bool) public approvedMinters;
@@ -23,32 +20,32 @@ contract NFT is ERC721, ERC721URIStorage, Ownable {
     event MinterApproved(address indexed minter);
     event MinterRevoked(address indexed minter);
     
-    constructor() ERC721("MonadNFT", "MNFT") {
+    constructor() ERC721("MonadNFT", "MNFT") Ownable(msg.sender) {
         // Start token IDs from 1
-        _tokenIdCounter.increment();
+        _tokenIdCounter = 1;
     }
     
     /**
      * @dev Mint a new NFT with metadata URI
      * @param to Address to mint the NFT to
-     * @param tokenURI Metadata URI for the NFT
+     * @param uri Metadata URI for the NFT
      * @return tokenId The ID of the newly minted token
      */
-    function mint(address to, string memory tokenURI) public returns (uint256) {
+    function mint(address to, string memory uri) public returns (uint256) {
         require(
             owner() == _msgSender() || approvedMinters[_msgSender()], 
             "NFT: caller is not owner or approved minter"
         );
         require(to != address(0), "NFT: cannot mint to zero address");
-        require(bytes(tokenURI).length > 0, "NFT: tokenURI cannot be empty");
+        require(bytes(uri).length > 0, "NFT: tokenURI cannot be empty");
         
-        uint256 tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
+        uint256 tokenId = _tokenIdCounter;
+        _tokenIdCounter++;
         
         _safeMint(to, tokenId);
-        _setTokenURI(tokenId, tokenURI);
+        _setTokenURI(tokenId, uri);
         
-        emit NFTMinted(tokenId, to, tokenURI);
+        emit NFTMinted(tokenId, to, uri);
         
         return tokenId;
     }
@@ -77,7 +74,7 @@ contract NFT is ERC721, ERC721URIStorage, Ownable {
      * @return Current token ID that will be used for next mint
      */
     function getCurrentTokenId() external view returns (uint256) {
-        return _tokenIdCounter.current();
+        return _tokenIdCounter;
     }
     
     /**
@@ -85,7 +82,7 @@ contract NFT is ERC721, ERC721URIStorage, Ownable {
      * @return Total supply of tokens
      */
     function totalSupply() external view returns (uint256) {
-        return _tokenIdCounter.current() - 1;
+        return _tokenIdCounter - 1;
     }
     
     /**
@@ -94,14 +91,10 @@ contract NFT is ERC721, ERC721URIStorage, Ownable {
      * @return bool indicating if token exists
      */
     function exists(uint256 tokenId) external view returns (bool) {
-        return _exists(tokenId);
+        return _ownerOf(tokenId) != address(0);
     }
     
-    // Override required functions
-    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
-        super._burn(tokenId);
-    }
-    
+    // Override required functions for ERC721URIStorage
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }
